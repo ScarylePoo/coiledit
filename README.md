@@ -1,6 +1,35 @@
 # CoilEdit
 
-A plain code editor: open files, edit them, close them. No projects or workspaces.
+**A lightweight code editor made for Recoil engine game development**, with the Recoil Lua API built in.
+
+If you write widgets, gadgets, unit scripts or game logic for [Beyond All Reason](https://www.beyondallreason.info/) or another game on the [Recoil engine](https://github.com/beyond-all-reason/RecoilEngine) (the successor to Spring RTS), CoilEdit knows the engine API. Hover any engine call and you see what it does without leaving the editor or digging through the wiki.
+
+![CoilEdit showing Recoil API docs for an aliased Spring call](docs/screenshot-hover.png)
+
+### The Recoil glossary, built in
+
+- **Hover docs for the whole engine API.** That covers `Spring.*`, `gl.*`, `CMD.*`, `Game.*`, `VFS.*`, `Spring.MoveCtrl.*` and the rest: about 1,500 functions and 1,000 constants, with descriptions, parameters, return values and a link to the engine source.
+- **It follows your aliases.** After `local spGetUnitPosition = Spring.GetUnitPosition`, hovering `spGetUnitPosition` anywhere in the file shows the real docs.
+- **Callins too.** Hover `widget:UnitCreated` or `gadget:GameFrame` to see when it fires and what it receives. Typing `function widget:` lists every callin with its parameters filled in.
+- **Completion and parameter hints.** Type `Spring.` for a documented list. Type `(` and the current argument is highlighted as you go.
+- **Color-coded engine code:**
+  - engine callouts in teal
+  - engine callins in gold
+  - widget/gadget-handler call-ins in coral
+  - engine constants in pink
+
+  A misspelled API name stays uncolored, so typos stand out right away.
+- **Stays current.** Pull the latest API docs from GitHub with one click, or load them from your game repo's `recoil-lua-library` submodule. You can also read the handler call-ins from your own game's `luaui/` and `luarules/`.
+
+![Engine callouts, callins and constants color-coded](docs/screenshot-colors.png)
+
+### An editor that stays out of the way
+
+- **No projects or workspaces.** Open files from anywhere, Notepad++ style.
+- **Vertical tabs that stay sorted A–Z**, each showing its folder. Optionally group them by folder, which helps when several games or mods are open at once.
+- **Picks up where you left off.** Tabs, cursor positions and unsaved edits all come back after a restart.
+- **The VS Code editing engine (Monaco):** multi-cursor, find/replace, bracket matching, and highlighting for dozens of languages.
+- **Small and native:** a 4 MB installer for Windows, Linux and macOS.
 
 ## Install
 
