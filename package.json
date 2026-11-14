@@ -1,7 +1,7 @@
 {
   "name": "coiledit",
   "productName": "CoilEdit",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "A no-nonsense code editor for Recoil engine Lua, with alphabetical vertical tabs.",
   "license": "Unlicense",

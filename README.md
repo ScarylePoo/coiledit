@@ -8,7 +8,7 @@ Download the installer for your system from the [Releases](https://github.com/Sc
 
 | System | File | Notes |
 | --- | --- | --- |
-| Windows | `CoilEdit_x.y.z_x64-setup.exe` (or `.msi`) | Installs for your user only, so no admin rights are needed. Adds **Edit with CoilEdit** to the right-click menu of every file (on Windows 11 it's under "Show more options") and an **Open with** entry for code and text types. |
+| Windows | `CoilEdit_x.y.z_x64-setup.exe` (or `.msi`) | Installs for your user only, so no admin rights are needed. Adds **Edit with CoilEdit** to the right-click menu of every file (on Windows 11 it's under "Show more options") and lists CoilEdit under **Open with** for code and text types. It never makes itself the default program for anything. To use it as the default for a type, right-click a file → Open with → Choose another app → CoilEdit → Always. |
 | Linux | `.AppImage`, `.deb`, or `.rpm` | The AppImage runs anywhere: `chmod +x` it and launch it. |
 | macOS | `CoilEdit_x.y.z_universal.dmg` | Runs on both Apple Silicon and Intel Macs. |
 

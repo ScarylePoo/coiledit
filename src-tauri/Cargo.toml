@@ -1,6 +1,6 @@
 [package]
 name = "coiledit"
-version = "0.2.0"
+version = "0.2.1"
 description = "A no-nonsense code editor for Recoil engine Lua"
 edition = "2021"
 license = "Unlicense"
