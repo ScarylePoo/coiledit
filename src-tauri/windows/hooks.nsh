@@ -69,6 +69,13 @@
   coiledit_repair_cleanup_${EXT}:
     DeleteRegValue HKCU "Software\Classes\.${EXT}" "${COILEDIT_PROGID}_backup"
   coiledit_repair_done_${EXT}:
+  ; The v0.2.0 uninstaller (which can run during an upgrade) "restores" an empty
+  ; default, which hides the system's own handler. An empty default is never valid.
+  ClearErrors
+  ReadRegStr $R0 HKCU "Software\Classes\.${EXT}" ""
+  IfErrors +3
+  StrCmp $R0 "" 0 +2
+  DeleteRegValue HKCU "Software\Classes\.${EXT}" ""
 !macroend
 
 !macro NSIS_HOOK_POSTINSTALL
