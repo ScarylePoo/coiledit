@@ -58,8 +58,19 @@
     </div>
   </div>
 
-  <script src="../node_modules/monaco-editor/min/vs/loader.js"></script>
+  <div id="modal" hidden>
+    <div class="modal-box">
+      <div class="modal-msg"></div>
+      <div class="modal-detail"></div>
+      <div class="modal-buttons"></div>
+    </div>
+  </div>
+  <div id="toast" hidden></div>
+
+  <script src="vendor/monaco/vs/loader.js"></script>
+  <script src="recoil-docs.js"></script>
   <script src="recoil.js"></script>
+  <script src="platform.js"></script>
   <script src="renderer.js"></script>
 </body>
 </html>

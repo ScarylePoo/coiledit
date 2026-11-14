@@ -1,16 +1,18 @@
-'use strict';
 // Builds a compact glossary of the Recoil engine Lua API from the LuaLS annotation
-// files in https://github.com/beyond-all-reason/recoil-lua-library
+// files in https://github.com/beyond-all-reason/recoil-lua-library, and extracts
+// widget/gadget handler call-in names from a game's handler files.
 //
-// CLI:
-//   node recoil-docs.js --fetch [out.json]          download latest from GitHub
-//   node recoil-docs.js <library-folder> [out.json] parse a local checkout
-const fs = require('fs');
-const path = require('path');
+// Shared by the app (loaded as a <script>, exposes window.RecoilDocs) and the Node CLI
+// in tools/recoil-docs-cli.js. Everything here works on in-memory texts; reading
+// folders is done by the caller.
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.RecoilDocs = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+'use strict';
 
 const REPO = 'beyond-all-reason/recoil-lua-library';
 const BRANCH = 'main';
-const DEFAULT_OUT = path.join(__dirname, 'src', 'data', 'recoil-api.json');
 
 // ---------- annotation parsing ----------
 
@@ -223,24 +225,9 @@ function parseFiles(files) {
 
 // ---------- sources ----------
 
-function readFolder(dir) {
-  const files = [];
-  const lib = fs.existsSync(path.join(dir, 'library')) ? path.join(dir, 'library') : dir;
-  const walk = (d) => {
-    for (const ent of fs.readdirSync(d, { withFileTypes: true })) {
-      const p = path.join(d, ent.name);
-      if (ent.isDirectory()) { if (!ent.name.startsWith('.')) walk(p); } else if (ent.name.endsWith('.lua')) {
-        files.push({ path: path.relative(lib, p).replace(/\\/g, '/'), text: fs.readFileSync(p, 'utf8') });
-      }
-    }
-  };
-  walk(lib);
-  return files;
-}
-
-async function fetchLibrary(fetchFn = fetch) {
+async function fetchLibrary(fetchFn = (...a) => fetch(...a)) {
   const res = await fetchFn(`https://api.github.com/repos/${REPO}/git/trees/${BRANCH}?recursive=1`, {
-    headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'coiledit' },
+    headers: { Accept: 'application/vnd.github+json' },
   });
   if (!res.ok) throw new Error(`GitHub API: ${res.status} ${res.statusText}`);
   const tree = await res.json();
@@ -262,12 +249,6 @@ function build(files, source, rev) {
 async function updateFromGitHub(fetchFn) {
   const { files, rev } = await fetchLibrary(fetchFn);
   return build(files, `github.com/${REPO}`, rev);
-}
-
-function buildFromFolder(dir) {
-  const files = readFolder(dir);
-  if (!files.length) throw new Error('No .lua files found in that folder.');
-  return build(files, dir);
 }
 
 // ---------- widget/gadget handler call-ins ----------
@@ -294,28 +275,16 @@ function extractHandlerCallins(text) {
   return names;
 }
 
-function scanHandlers(dir, source) {
-  const seen = new Set();
-  const out = { v: 1, source: source || dir, built: new Date().toISOString(), widget: new Set(), gadget: new Set(), files: [] };
-  for (const sub of ['', 'luaui', 'LuaUI', 'luarules', 'LuaRules']) {
-    const d = path.join(dir, sub);
-    let list;
-    try { list = fs.readdirSync(d); } catch { continue; }
-    for (const f of list) {
-      if (!f.toLowerCase().endsWith('.lua')) continue;
-      const p = path.join(d, f);
-      const key = path.resolve(p).toLowerCase();
-      if (seen.has(key)) continue;
-      seen.add(key);
-      let text;
-      try { text = fs.readFileSync(p, 'utf8'); } catch { continue; }
-      if (!/callInLists|CallInsList/i.test(text)) continue;
-      const names = extractHandlerCallins(text);
-      if (!names.size) continue;
-      const kind = /gadget|luarules/i.test(path.relative(dir, p)) ? 'gadget' : 'widget';
-      names.forEach((n) => out[kind].add(n));
-      out.files.push(path.relative(dir, p).replace(/\\/g, '/'));
-    }
+// files: [{ path, text }] with paths relative to the game folder
+function buildHandlers(files, source) {
+  const out = { v: 1, source, built: new Date().toISOString(), widget: new Set(), gadget: new Set(), files: [] };
+  for (const f of files) {
+    if (!/callInLists|CallInsList/i.test(f.text)) continue;
+    const names = extractHandlerCallins(f.text);
+    if (!names.size) continue;
+    const kind = /gadget|luarules/i.test(f.path) ? 'gadget' : 'widget';
+    names.forEach((n) => out[kind].add(n));
+    out.files.push(f.path);
   }
   if (!out.files.length) throw new Error('No widget/gadget handler found (looked in luaui/ and luarules/ for files with a callInLists table).');
   out.widget = [...out.widget].sort();
@@ -323,26 +292,5 @@ function scanHandlers(dir, source) {
   return out;
 }
 
-const DEFAULT_HANDLERS_OUT = path.join(__dirname, 'src', 'data', 'handler-callins.json');
-
-module.exports = { parseFiles, updateFromGitHub, buildFromFolder, scanHandlers, DEFAULT_OUT };
-
-if (require.main === module) {
-  (async () => {
-    const [arg, out = DEFAULT_OUT] = process.argv.slice(2);
-    if (!arg) { console.error('usage: node recoil-docs.js --fetch|<library-folder> [out.json]\n       node recoil-docs.js --handlers <game-folder> [label] [out.json]'); process.exit(1); }
-    if (arg === '--handlers') {
-      const [, dir, label, hout = DEFAULT_HANDLERS_OUT] = process.argv.slice(2);
-      const h = scanHandlers(dir, label);
-      fs.mkdirSync(path.dirname(hout), { recursive: true });
-      fs.writeFileSync(hout, JSON.stringify(h));
-      console.log(`${h.widget.length} widget + ${h.gadget.length} gadget call-ins from ${h.files.join(', ')} -> ${hout}`);
-      return;
-    }
-    const db = arg === '--fetch' ? await updateFromGitHub() : buildFromFolder(arg);
-    fs.mkdirSync(path.dirname(out), { recursive: true });
-    fs.writeFileSync(out, JSON.stringify(db));
-    const fns = db.entries.filter((e) => e.k === 'f').length;
-    console.log(`${db.entries.length} entries (${fns} functions), ${db.types.length} types -> ${out}`);
-  })().catch((e) => { console.error(e.message); process.exit(1); });
-}
+return { REPO, parseFiles, build, fetchLibrary, updateFromGitHub, extractHandlerCallins, buildHandlers };
+});

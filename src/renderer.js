@@ -576,9 +576,10 @@ async function restoreDocs(s) {
   if (first) activate(first.id);
 }
 
-window.addEventListener('beforeunload', () => {
+// Saved by the platform layer when the window is closing.
+api.onBeforeClose(() => {
   clearTimeout(saveTimer);
-  api.saveSessionSync(sessionData());
+  return sessionData();
 });
 
 // ---------- settings application ----------
@@ -602,7 +603,16 @@ function nav(step) {
   const i = order.indexOf(activeDoc());
   activate(order[(i + step + order.length) % order.length].id);
 }
-function editorHasFocus() { return editor && editor.hasTextFocus(); }
+// Menu edit commands go to the editor unless a text box (quick pick) has focus.
+function editAction(editorAction, domCommand) {
+  const el = document.activeElement;
+  if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') && !el.closest('.monaco-editor')) {
+    document.execCommand(domCommand);
+  } else if (editor && editor.getModel()) {
+    editor.focus();
+    editor.trigger('menu', editorAction, null);
+  }
+}
 function setting(key, value) { settings[key] = value; applySettings(); scheduleSave(); }
 
 const commands = {
@@ -615,9 +625,12 @@ const commands = {
   saveAll: async () => { for (const d of visualOrder()) if (isDirty(d) || !d.path && d.model.getValueLength()) if (!(await saveDoc(d))) break; },
   close: () => { if (activeId != null) closeDoc(activeId); },
   closeAll: () => closeMany(visualOrder()),
-  undo: () => (editorHasFocus() ? editor.trigger('menu', 'undo') : document.execCommand('undo')),
-  redo: () => (editorHasFocus() ? editor.trigger('menu', 'redo') : document.execCommand('redo')),
-  selectAll: () => (editorHasFocus() ? editor.trigger('menu', 'editor.action.selectAll') : document.execCommand('selectAll')),
+  undo: () => editAction('undo', 'undo'),
+  redo: () => editAction('redo', 'redo'),
+  selectAll: () => editAction('editor.action.selectAll', 'selectAll'),
+  cut: () => editAction('editor.action.clipboardCutAction', 'cut'),
+  copy: () => editAction('editor.action.clipboardCopyAction', 'copy'),
+  paste: () => editAction('editor.action.clipboardPasteAction', 'paste'),
   find: () => editor.getModel() && editor.getAction('actions.find').run(),
   replace: () => editor.getModel() && editor.getAction('editor.action.startFindReplaceAction').run(),
   gotoLine: () => editor.getModel() && editor.getAction('editor.action.gotoLine').run(),
@@ -649,7 +662,7 @@ function wireUi() {
   $('#st-indent').addEventListener('click', pickIndent);
   $('#st-enc').addEventListener('click', pickEncoding);
   $('#st-eol').addEventListener('click', toggleEol);
-  $('#st-path').addEventListener('click', () => { const d = activeDoc(); if (d && d.path) navigator.clipboard.writeText(d.path); });
+  $('#st-path').addEventListener('click', () => { const d = activeDoc(); if (d && d.path) api.copyText(d.path); });
   $('#st-path').addEventListener('dblclick', () => { const d = activeDoc(); if (d && d.path) api.reveal(d.path); });
   // double-click empty sidebar space = new file (Notepad++ habit)
   $('#tabs').addEventListener('dblclick', (e) => { if (e.target.id === 'tabs') newUntitled(); });
@@ -672,17 +685,7 @@ function wireUi() {
     window.addEventListener('mousemove', move);
     window.addEventListener('mouseup', up);
   });
-
-  // drag & drop files from Explorer
-  const hasFiles = (e) => e.dataTransfer && [...e.dataTransfer.types].includes('Files');
-  window.addEventListener('dragover', (e) => { if (hasFiles(e)) { e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'copy'; } }, true);
-  window.addEventListener('drop', (e) => {
-    if (!hasFiles(e)) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const paths = [...e.dataTransfer.files].map((f) => api.pathForFile(f)).filter(Boolean);
-    if (paths.length) openPaths(paths);
-  }, true);
+  // Files dropped from the file manager arrive through api.onOpenPaths.
 }
 
 // ---------- theme ----------
@@ -773,8 +776,8 @@ function defineTheme() {
 }
 
 // ---------- boot ----------
-window.MonacoEnvironment = { getWorkerUrl: () => 'app://local/src/worker.js' };
-require.config({ paths: { vs: '../node_modules/monaco-editor/min/vs' } });
+window.MonacoEnvironment = { getWorkerUrl: () => new URL('worker.js', location.href).href };
+require.config({ paths: { vs: 'vendor/monaco/vs' } });
 require(['vs/editor/editor.main'], async () => {
   const s = await api.loadSession();
   if (s && s.settings) Object.assign(settings, s.settings);
@@ -792,7 +795,7 @@ require(['vs/editor/editor.main'], async () => {
   editor = monaco.editor.create($('#editor'), {
     model: null,
     theme: 'coil',
-    fontFamily: "'Cascadia Mono', 'Cascadia Code', 'JetBrains Mono', Consolas, 'Courier New', monospace",
+    fontFamily: "'Cascadia Mono', 'Cascadia Code', 'JetBrains Mono', Consolas, 'SF Mono', Menlo, 'DejaVu Sans Mono', 'Liberation Mono', 'Ubuntu Mono', monospace",
     fontSize: settings.fontSize,
     lineHeight: 0,
     minimap: { enabled: settings.minimap, renderCharacters: false, scale: 1 },
@@ -822,6 +825,8 @@ require(['vs/editor/editor.main'], async () => {
   editor.onDidChangeModelContent(() => { if (activeDoc()) updateStatus(); });
 
   wireUi();
+  // Links in hovers (engine source etc.) open in the system browser.
+  monaco.editor.registerLinkOpener({ open: (uri) => { api.openUrl(uri.toString(true)); return true; } });
   if (window.Recoil) {
     window.Recoil.setData(await api.recoilDb());
     api.onRecoilDb((db) => window.Recoil.setData(db));

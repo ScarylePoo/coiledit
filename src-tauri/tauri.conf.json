@@ -1,0 +1,100 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "CoilEdit",
+  "mainBinaryName": "CoilEdit",
+  "version": "0.2.0",
+  "identifier": "io.github.scarylepoo.coiledit",
+  "build": {
+    "frontendDist": "../src",
+    "beforeDevCommand": "node tools/copy-monaco.js",
+    "beforeBuildCommand": "node tools/copy-monaco.js"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "CoilEdit",
+        "width": 1300,
+        "height": 850,
+        "minWidth": 500,
+        "minHeight": 300,
+        "theme": "Dark",
+        "backgroundColor": "#1b1d23",
+        "dragDropEnabled": true,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "DeveloperTool",
+    "shortDescription": "Code editor for Recoil engine Lua",
+    "longDescription": "A no-nonsense code editor with alphabetical vertical tabs and built-in Recoil engine Lua API docs.",
+    "copyright": "Public domain (Unlicense)",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "fileAssociations": [
+      {
+        "ext": [
+          "lua",
+          "txt",
+          "md",
+          "json",
+          "js",
+          "ts",
+          "css",
+          "html",
+          "xml",
+          "ini",
+          "cfg",
+          "glsl",
+          "vert",
+          "frag",
+          "sh",
+          "bat",
+          "ps1",
+          "py",
+          "c",
+          "cpp",
+          "h",
+          "hpp",
+          "yml",
+          "yaml",
+          "toml",
+          "log",
+          "tdf",
+          "fbi",
+          "bos"
+        ],
+        "name": "CoilEdit File",
+        "description": "Text file",
+        "role": "Editor"
+      }
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "installerHooks": "windows/hooks.nsh"
+      }
+    },
+    "linux": {
+      "deb": {
+        "depends": []
+      }
+    },
+    "macOS": {
+      "signingIdentity": "-",
+      "minimumSystemVersion": "11.0"
+    }
+  }
+}
