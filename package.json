@@ -1,0 +1,94 @@
+{
+  "name": "coiledit",
+  "productName": "CoilEdit",
+  "version": "0.1.0",
+  "description": "A no-nonsense code editor for Recoil engine Lua, with alphabetical vertical tabs.",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis",
+    "icon": "electron tools/make-icon.js"
+  },
+  "dependencies": {
+    "monaco-editor": "0.52.2"
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "local.coiledit.editor",
+    "productName": "CoilEdit",
+    "files": [
+      "main.js",
+      "preload.js",
+      "recoil-docs.js",
+      "src/**/*",
+      "package.json",
+      "!node_modules/monaco-editor/{esm,dev,min-maps}/**"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "src/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "CoilEdit",
+      "include": "build/installer.nsh",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
+    },
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "fileAssociations": [
+      {
+        "ext": [
+          "lua",
+          "txt",
+          "md",
+          "json",
+          "js",
+          "ts",
+          "css",
+          "html",
+          "xml",
+          "ini",
+          "cfg",
+          "glsl",
+          "vert",
+          "frag",
+          "fs",
+          "vs",
+          "sh",
+          "bat",
+          "ps1",
+          "py",
+          "c",
+          "cpp",
+          "h",
+          "hpp",
+          "yml",
+          "yaml",
+          "toml",
+          "log",
+          "tdf",
+          "fbi",
+          "bos"
+        ],
+        "name": "CoilEdit File",
+        "description": "Text file",
+        "role": "Editor"
+      }
+    ]
+  },
+  "author": "CoilEdit"
+}
