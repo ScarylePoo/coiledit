@@ -96,3 +96,16 @@ Handler call-ins come from the game's own handler files. The default list is tak
 
 - **Recoil → Load Handler Call-ins from Game Folder…** reads another game's handlers. Pick the folder that contains `luaui/` and `luarules/`.
 - **Recoil → Reset Handler Call-ins to Default (BAR)** goes back to the default list.
+
+## License and credits
+
+CoilEdit's own code is released into the public domain under the [Unlicense](LICENSE).
+
+Some bundled pieces come from other projects and keep their own licenses:
+
+- **Recoil API docs** (`src/data/recoil-api.json`) are generated from the [recoil-lua-library](https://github.com/beyond-all-reason/recoil-lua-library) annotations. Those annotations are extracted from the source of the [Recoil engine](https://github.com/beyond-all-reason/RecoilEngine), which is licensed under the GNU GPL. The descriptions belong to the Recoil engine developers and fall under its license, not the Unlicense. The same applies to API docs you download in the app with **Recoil → Update API Docs from GitHub**.
+- **Handler call-in names** (`src/data/handler-callins.json`) are taken from [Beyond All Reason](https://github.com/beyond-all-reason/Beyond-All-Reason)'s `luaui/barwidgets.lua` and `luarules/gadgets.lua`.
+- **[Monaco Editor](https://github.com/microsoft/monaco-editor)** is © Microsoft, MIT license.
+- **[Tauri](https://tauri.app)** is MIT / Apache-2.0.
+
+Thanks to the Recoil and Beyond All Reason developers for documenting the engine API in a machine-readable form.
